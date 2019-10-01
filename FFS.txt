@@ -1,0 +1,690 @@
+astar
+----------
+class Nodo():
+
+    def __init__(self, pariente=None, posicion=None):
+        self.pariente = pariente
+        self.posicion = posicion
+
+        self.g = 0
+        self.h = 0
+        self.f = 0
+
+    def __eq__(self, otro):
+        return self.posicion == otro.posicion
+
+
+def astar(mapa, inicio, objetivo):
+    
+    # Create inicio and objetivo Nodo
+    Nodo_incio = Nodo(None, inicio)
+    Nodo_incio.g = Nodo_incio.h = Nodo_incio.f = 0
+    Nodo_fin = Nodo(None, objetivo)
+    Nodo_fin.g = Nodo_fin.h = Nodo_fin.f = 0
+
+    # listas
+    lista_abierta = []
+    lista_cerrada = []
+
+    # agregando el nodo inicio a la lista
+    lista_abierta.append(Nodo_incio)
+
+    # mientras que la lista bierta tenga elementos
+    while len(lista_abierta) > 0:
+
+        # obtener el nodo actual con f minima
+        Nodo_actual = lista_abierta[0]
+        index_actual = 0
+        for index, item in enumerate(lista_abierta):
+            if item.f < Nodo_actual.f:
+                Nodo_actual = item
+                index_actual = index
+
+        # sacar de la lista abierta y meter a la lista cerrada
+        lista_abierta.pop(index_actual)
+        lista_cerrada.append(Nodo_actual)
+
+        # Encuentra el objetivo
+        if Nodo_actual == Nodo_fin:
+            path = []
+            current = Nodo_actual
+            while current is not None:
+                path.append(current.posicion)
+                current = current.pariente
+            return path[::-1] # retorna en reversa
+
+        # Genera los sucesores
+        sucesores = []
+        for pos in [(0, -1), (0, 1), (-1, 0), (1, 0), (-1, -1), (-1, 1), (1, -1), (1, 1)]: # adyacentes
+
+            # Get Nodo posicion
+            Nodo_posicion = (Nodo_actual.posicion[0] + pos[0], Nodo_actual.posicion[1] + pos[1])
+
+            # Asegurarse que está en el rango
+            if Nodo_posicion[0] > (len(mapa) - 1) or Nodo_posicion[0] < 0 or Nodo_posicion[1] > (len(mapa[len(mapa)-1]) -1) or Nodo_posicion[1] < 0:
+                continue
+
+            # asesugurase del camino transitable
+            if mapa[Nodo_posicion[0]][Nodo_posicion[1]] != 0:
+                continue
+
+            # crear nuevo nodo
+            nuevo_Nodo = Nodo(Nodo_actual, Nodo_posicion)
+
+            # agrega 
+            sucesores.append(nuevo_Nodo)
+
+        # tratando los sucesores
+        for sucesor in sucesores:
+
+            # sucesor esta en la lista cerrada 
+            for closed_child in lista_cerrada:
+                if sucesor == closed_child:
+                    continue
+
+            # creando los valores f,g,h
+            sucesor.g = Nodo_actual.g + 1
+            sucesor.h = ((sucesor.posicion[0] - Nodo_fin.posicion[0]) ** 2) + ((sucesor.posicion[1] - Nodo_fin.posicion[1]) ** 2)
+            sucesor.f = sucesor.g + sucesor.h
+
+            # sucesor esta ya en la lisa abierta 
+            for open_Nodo in lista_abierta:
+                if sucesor == open_Nodo and sucesor.g > open_Nodo.g:
+                    continue
+
+            # agregando sucesor en la lista bierta
+            lista_abierta.append(sucesor)
+
+
+def main():
+
+    mapa = [[0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]]
+
+    inicio = (0, 0)
+    objetivo = (7, 6)
+
+    camino = astar(mapa, inicio, objetivo)
+    print(camino)
+
+
+if __name__ == '__main__':
+    main()
+------------------------
+
+----------------------
+
+hillclimb
+---------------
+
+import numpy as np
+import copy
+import random
+
+
+class it:
+    def __init__(self,id = 0, v = 0,w = 0):
+        self.id = id
+        self.v = v
+        self.w = w
+
+
+cap = 16
+items = [it(1,8,5),it(2,7,6),it(3,12,10),it(4,6,4),it(5,2,1),it(6,3,1)]
+
+cap = 255
+items = [it(1,204,51),it(2,51,119),it(3,119,68),it(4,68,34),it(5,51,17),it(6,136,102)]
+
+maxv = 0
+best = []
+for i,_ in enumerate(items):
+    w = 0
+    v = 0
+    end = False
+    init = copy.deepcopy(items)
+    random.shuffle(init)
+    start = init.pop(i)
+    sol = []
+    sol.append(start)
+    w += start.w
+    v += start.v
+    print("INICIO: %i %i"%(start.v,start.w))
+    while not end:
+        bestit = sol[-1]
+        auxw = 9999
+        auxv = 0
+        for item in init:
+            if (item.w + w) <= cap and (item.v + v) > auxv and (item.w + w) < auxw:
+                auxv = item.v
+                bestit = item
+        if bestit != sol[-1]:
+            w += bestit.w
+            v += bestit.v
+            init.remove(bestit)
+            sol.append(bestit)
+        else:
+            if v > maxv:
+                best = copy.deepcopy(sol)
+                maxv = v
+            print("Máximo hasta ahora: %i"%(maxv))
+            print("Valor: %i, Peso: %i de %i\n"%(v,w,cap))
+            #print("Solución:")
+            #for item in sol:
+                #print('\t',item.id, item.v,item.w)
+            end = True
+print("\nMEJOR SOLUCION: ")
+print("Valor: %i, Peso: %i de %i"%(sum([x.v for x in best]),sum([x.w for x in best]),cap))
+for item in best:
+    print('\t',item.id, item.v,item.w)
+
+
+maxv
+---------------------------------
+
+
+
+------------------------------
+
+GENETICO
+--------------------
+import numpy
+import random
+
+def Parejas(N):
+    Aleatorio = random.sample(range(int(N/2),N),int(N/2))
+    Pareja = {}
+    for i in range(int(N/2)):
+        Pareja[i] = Aleatorio[i]
+        Pareja[Aleatorio[i]] = i
+    return Pareja
+
+def Inicializacion(N):
+    global Individuos
+    global Mejor
+    Individuos = {}
+    for i in range(N):
+        Individuos[i] = numpy.random.choice(range(1,N+1),N,replace=True)
+    print('---Inicializacion----')
+    Mostrar(N)
+	
+def Seleccion(N):
+    print('---Seleccion----')
+    Pareja = Parejas(N)
+    print('Parejas',Pareja)
+    for k,v in Pareja.items():
+        if Idoneidad(Individuos[k]) >= Idoneidad(Individuos[v]):
+            Individuos[v] = Individuos[k]
+    Mostrar(N)
+            
+def Idoneidad(Tablero):
+    Atacadas = 0
+    for i in range(len(Tablero)):
+        for j in range(i + 1,len(Tablero)):
+            if Tablero[i] == Tablero[j]:
+                Atacadas += 1
+            Dif = j - i
+            if Tablero[i] == Tablero[j] - Dif or Tablero[i] == Tablero[j] + Dif:
+                Atacadas += 1
+    return (N*(N-1)/2-Atacadas)
+
+def Cruce(N):
+    print('-----Cruce ------')
+    Pareja = Parejas(N)
+    print('Parejas',Pareja)
+    item = 0
+    for k,v in Pareja.items():
+        if item % 2 == 0:
+            Punto = random.randint(1,N-2)
+            print('punto',Punto)
+            Hijo1 = []
+            Hijo2 = []
+            Padre1 = Individuos[k]
+            Padre2 = Individuos[v]
+            Hijo1.extend(Padre1[0:Punto])
+            Hijo1.extend(Padre2[Punto:])
+            Hijo2.extend(Padre2[0:Punto])
+            Hijo2.extend(Padre1[Punto:])
+            Individuos[k] = Hijo1
+            Individuos[v] = Hijo2
+        item = item+1
+    Mostrar(N)
+
+def Mostrar(N):
+    for i in range(N):
+        print(Individuos[i],'f(x)=',Idoneidad(Individuos[i]))
+
+N = 8
+Inicializacion(N)
+Seleccion(N)
+Cruce(N)
+
+
+
+    
+---------------------
+
+
+
+
+
+
+-------------------------
+
+ANNEALING
+
+--------------------
+
+import random
+import math
+
+
+class Ciudad:
+    def __init__(self, lon, lat, name):
+        self.lon = lon
+        self.lat = lat
+        self.name = name
+
+    def distancia(self, ciudad):
+        distanciaX = (ciudad.lon - self.lon) * 40000 * math.cos((self.lat + ciudad.lat) * math.pi / 360) / 360
+        distanciaY = (self.lat - ciudad.lat) * 40000 / 360
+        distancia = math.sqrt((distanciaX * distanciaX) + (distanciaY * distanciaY))
+        return distancia
+
+    def get_nombre_ciudad(ciudad):
+        return ciudad.name
+
+class TourAdmin:
+    destino_ciudades = []
+
+    def add_city(self, ciudad):
+        self.destino_ciudades.append(ciudad)
+
+    def get_city(self, index):
+        return self.destino_ciudades[index]
+
+    def numero_de_ciudades(self):
+        return len(self.destino_ciudades)
+
+
+class Tour:
+    def __init__(self, tour_admin, tour=None):
+        self.tour_admin = tour_admin
+        self.tour = []
+        self.distancia = 0
+        if tour is not None:
+            self.tour = list(tour)
+        else:
+            for i in range(0, self.tour_admin.numero_de_ciudades()):
+                self.tour.append(None)
+
+    def __getitem__(self, index):
+        return self.tour[index]
+
+    def generar_tour(self):
+        for indice_ciudad in range(0, self.tour_admin.numero_de_ciudades()):
+            self.set_city(indice_ciudad, self.tour_admin.get_city(indice_ciudad))
+        #random.shuffle(self.tour)
+
+    def get_city(self, tour_position):
+        return self.tour[tour_position]
+
+    def set_city(self, tour_position, ciudad):
+        self.tour[tour_position] = ciudad
+        self.distancia = 0
+
+    def get_distancia(self):
+        if self.distancia == 0:
+            tour_distancia = 0
+            for indice_ciudad in range(0, self.tour_tam()):
+                ciudad_inicio = self.get_city(indice_ciudad)
+                if indice_ciudad + 1 < self.tour_tam():
+                    ciudad_lelgada = self.get_city(indice_ciudad + 1)
+                else:
+                    ciudad_lelgada = self.get_city(0)
+                tour_distancia += ciudad_inicio.distancia(ciudad_lelgada)
+            self.distancia = tour_distancia
+
+        return self.distancia
+
+    def tour_tam(self):
+        return len(self.tour)
+
+    def mostrar(self):
+        for i in range(0, self.tour_tam()):
+            print(Ciudad.get_nombre_ciudad(self.get_city(i)))
+
+class SimulatedAnnealing:
+    def __init__(self, destinos, temperatura_inicial, valocidad_enfriamiento):
+        self.tour_admin = destinos
+        self.tour = Tour(destinos)
+        self.tour.generar_tour()
+        self.el_mejor = self.tour
+        self.temperatura = temperatura_inicial
+        self.valocidad_enfriamiento = valocidad_enfriamiento
+
+    def funcion_aceptacion(self, delta_energia):
+        if delta_energia < 0:
+            return True
+        elif random.random() <= math.exp(-(delta_energia / self.temperatura)):
+            return True
+        return False
+
+    def nuevo_tour(self):
+        tour_nuevo = Tour(self.tour_admin, self.tour)
+
+        pos1 = random.randrange(self.tour.tour_tam())
+        pos2 = random.randrange(self.tour.tour_tam())
+        ciudad1 = tour_nuevo.get_city(pos1)
+        ciudad2 = tour_nuevo.get_city(pos2)
+        tour_nuevo.set_city(pos2, ciudad1)
+        tour_nuevo.set_city(pos1, ciudad2)
+
+        actual_energia = self.tour.get_distancia()
+        nueva_energia = tour_nuevo.get_distancia()
+        delta = nueva_energia - actual_energia
+
+        if self.funcion_aceptacion(delta):
+            self.tour = tour_nuevo
+
+        if tour_nuevo.get_distancia() < self.el_mejor.get_distancia():
+            self.el_mejor = tour_nuevo
+            print(tour_nuevo.get_distancia())
+
+    def run(self):
+        while self.temperatura > 1:
+            self.nuevo_tour()
+            self.temperatura *= 1 - self.valocidad_enfriamiento
+
+
+def main():
+    destinos = TourAdmin()
+    ciudad1 = Ciudad(-77.0282400, -12.0431800, 'Lima')
+    destinos.add_city(ciudad1)
+
+    ciudad2 = Ciudad(--55.0000000, -10.0000000, 'Brasil')
+    destinos.add_city(ciudad2)
+    ciudad3 = Ciudad(-65.0000000, -17.0000000, 'Bolivia')
+    destinos.add_city(ciudad3)
+    ciudad4 = Ciudad(-58.0000000, -23.0000000, 'Paraguay')
+    destinos.add_city(ciudad4)
+    ciudad5 = Ciudad(-71.0000000, -30.0000000, 'Chile')
+    destinos.add_city(ciudad5)
+
+    sa = SimulatedAnnealing(destinos, temperatura_inicial=10000, valocidad_enfriamiento=0.003)
+    print(sa.tour.mostrar())
+    print(sa.tour.get_distancia())
+    sa.run()
+
+    print(sa.tour.mostrar())
+    print(sa.tour.get_distancia())
+
+
+main()
+--------------------------
+
+----------------------------
+
+WUMPUS
+
+------------------
+def bicondicional(p,q):
+    z = (p and q) or (not p and not q)
+    return z
+
+def conjuncion(p,q):
+    z= (p and q)
+    return z
+
+def disyuncion(p,q):
+    z= (p or q)
+    return z
+
+def implicacion(p,q):
+    if (p == False):
+        z = True
+    else:
+        z = q
+    return z
+
+def xor(p,q):
+    z= (p and not q) or (not p and q)
+    return z
+
+def negacion(p):
+    z= not p
+    return z
+
+if __name__ == '__main__':
+    Datos = []
+    b11 = [False, True]
+    b21 = [False, True]
+    p11 = [False, True]
+    p12 = [False, True]
+    p21 = [False, True]
+    p22 = [False, True]
+    p31 = [False, True]
+    
+    for b11val in b11:
+        for b21val in b21:
+             for p11val in p11:
+                  for p12val in p12:
+                       for p21val in p21:
+                            for p22val in p22:
+                                 for p31val in p31:
+                                    Lista = []
+                                    Lista.append(b11val)
+                                    Lista.append(b21val)
+                                    Lista.append(p11val)
+                                    Lista.append(p12val)
+                                    Lista.append(p21val)
+                                    Lista.append(p22val)
+                                    Lista.append(p31val)
+                                    Datos.append(Lista)
+
+    i = 0        
+    for (b11,b21,p11,p12,p21,p22,p31) in Datos:
+        r1=negacion(p11)
+        r2=bicondicional(b11,disyuncion(p12,p21))
+        r3=bicondicional(b21,disyuncion(p11,disyuncion(p22,p31)))
+        r4=negacion(b11)
+        r5=b21
+        bc=conjuncion(r1,conjuncion(r2,conjuncion(r3,conjuncion(r4,r5))))
+
+        i =i+1
+        print(i,"-",b11," ",b21," ",p11," ",p12," ",p21," ",p22," ",p31,"->",r1," ",r2," ",r3," ",r4," ",r5," ",bc)
+        
+       
+
+
+
+
+
+-----------------------------
+
+
+---------------------------
+
+PRIMERORDEN
+
+
+-----------------------------
+
+from kanren import Relation,fact, facts, var, run, conde
+ 
+Progenitor = Relation()
+Hombre = Relation()
+Mujer = Relation()
+ 
+#Hechos
+fact(Hombre, "Homero")
+fact(Hombre, "Bart")
+fact(Hombre, "Abraham")
+fact(Hombre, "Clancy")
+fact(Hombre, "Kang")
+fact(Mujer, "Jackeline")
+fact(Mujer, "Mona")
+fact(Mujer, "Marge")
+fact(Mujer, "Paty")
+fact(Mujer, "Selma")
+fact(Mujer, "Maggie")
+fact(Mujer, "Lisa")
+facts(Progenitor, ("Homero", "Bart"),
+                  ("Marge", "Bart"))
+facts(Progenitor, ("Homero", "Lisa"),
+                  ("Marge", "Lisa"))
+facts(Progenitor, ("Kang", "Maggie"),
+                  ("Marge", "Maggie"))
+facts(Progenitor, ("Abraham", "Homero"),
+                  ("Mona", "Homero"))
+facts(Progenitor, ("Clancy", "Marge"),
+                  ("Jackeline", "Marge"))
+facts(Progenitor, ("Clancy", "Selma"),
+                  ("Jackeline", "Selma"))
+facts(Progenitor, ("Clancy", "Paty"),
+                  ("Jackeline", "Paty"))
+ 
+#Reglas
+
+def Abuela(X, Y):
+    Z = var()
+    return conde((Progenitor(X, Z), Progenitor(Z, Y), Mujer(X)))
+
+ 
+#Tarea:  Madre, Padre, Esposos, Herman@s
+ 
+#####################################################
+X = var()
+Y = var()
+Z = var()
+#1- El abuela de Bart
+res = run(0, X, Abuela(X, "Bart"))
+print(res)
+
+------------------------------------
+
+
+
+------------------------------------
+
+
+********************************
+
+BICONDICIONAL
+
+def bicondicional(p,q):
+    z = (p and q) or (not p and not q)
+    return z
+
+if __name__ == '__main__':
+    Datos = []
+    p = [False,True]
+    q = [False, True]
+    for pval in p:
+        for qval in q:
+            Lista = []
+            Lista.append(pval)
+            Lista.append(qval)
+            Datos.append(Lista)
+    for (p,q) in Datos:
+       print(p,q,bicondicional(p,q))
+
+***********
+CONJUNCION
+
+def conjuncion(p,q):
+    z= (p and q)
+    return z
+
+if __name__ == '__main__':
+    Datos = []
+    p = [False,True]
+    q = [False, True]
+    for pval in p:
+        for qval in q:
+            Lista = []
+            Lista.append(pval)
+            Lista.append(qval)
+            Datos.append(Lista)
+    for (p,q) in Datos:
+       print(p,q, conjuncion(p,q))
+
+
+**********
+DISYUNCION
+
+def disyuncion(p,q):
+    z= (p or q)
+    return z
+
+if __name__ == '__main__':
+    Datos = []
+    p = [False,True]
+    q = [False, True]
+    for pval in p:
+        for qval in q:
+            Lista = []
+            Lista.append(pval)
+            Lista.append(qval)
+            Datos.append(Lista)
+    for (p,q) in Datos:
+       print(p,q, disyuncion(p,q))
+
+
+**********
+IMPLICACION
+
+def implicacion(p,q):
+    if (p == False):
+        z = True
+    else:
+        z = q
+    return z
+
+if __name__ == '__main__':
+    Datos = []
+    p = [False,True]
+    q = [False, True]
+    for pval in p:
+        for qval in q:
+            Lista = []
+            Lista.append(pval)
+            Lista.append(qval)
+            Datos.append(Lista)
+    for (p,q) in Datos:
+       print(p,q, implicacion(p,q))
+
+**************
+
+NEGACION
+
+def negacion(p):
+    z= not p
+    return z
+
+if __name__ == '__main__':
+    p = [True,False]
+    for (Dato) in p:
+       print(Dato,negacion(Dato))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
